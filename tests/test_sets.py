@@ -1,4 +1,5 @@
 import sys
+from collections.abc import Iterable, Set
 
 import pytest
 
@@ -152,11 +153,18 @@ class TestTwoSetSummary:
 
 
 class TestUnion:
-    def test_basic(self):
-        a = {1, 2}
-        b = {3}
-        c = {2, 4}
-        assert pk.sets.union([a, b, c]) == {1, 2, 3, 4}
+    @pytest.mark.parametrize(
+        "sets, expected",
+        [
+            ([{1, 2, 3}], {1, 2, 3}),
+            ([{1, 2}, {3, 4}], {1, 2, 3, 4}),
+            ([{1, 2}, {3}, {2, 4}], {1, 2, 3, 4}),
+            ([{1, 2}, {2, 3}, {3, 4}], {1, 2, 3, 4}),
+            ([set(), {1}, set(), {2, 3}], {1, 2, 3}),
+        ],
+    )
+    def test_basic_cases(self, sets: Iterable[Set[int]], expected: set[int]):
+        assert pk.sets.union(sets) == expected
 
     def test_empty_input(self):
         assert pk.sets.union([]) == set()
@@ -191,6 +199,38 @@ class TestUnion:
         iterable = [{1}, {2, 3}, {3, 4}]
         result = pk.sets.union(iterable)
         assert result == {1, 2, 3, 4}
+
+    def test_accepts_iterators(self):
+        sets = ({i, i + 1} for i in range(3))
+        assert pk.sets.union(sets) == {0, 1, 2, 3}
+
+    def test_heterogeneous_iterable_inputs(self):
+        sets = [
+            {1, 2},
+            (i for i in (2, 3)),
+            {i for i in range(3, 5)},
+        ]
+        result = pk.sets.union(sets)
+        assert result == {1, 2, 3, 4}
+
+    @pytest.mark.parametrize(
+        "sets",
+        [
+            [{1, 2}, {3.0, 4.0}],
+            [{"a", "b"}, {"c"}],
+            [{(1, 2)}, {(3, 4)}],
+        ],
+    )
+    def test_heterogeneous_hashable_elements(self, sets: Iterable[Set[int | str]]):
+        result = pk.sets.union(sets)
+        assert len(result) == sum(len(s) for s in sets)
+        for s in sets:
+            assert s.issubset(result)
+
+    def test_large_input(self):
+        sets = [set(range(i, i + 100)) for i in range(0, 1000, 100)]
+        result = pk.sets.union(sets)
+        assert result == set(range(0, 1000))
 
     def test_chain_flatten_and_union(self):
         data = [{1, 2}, [{3}], (4, {5, 6}), [[{7}]], "abc", 99]

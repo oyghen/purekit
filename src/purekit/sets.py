@@ -8,6 +8,7 @@ __all__ = (
     "intersect",
 )
 
+import itertools
 from collections.abc import Iterable, Set
 from dataclasses import dataclass
 from typing import Generic, TypeVar
@@ -126,11 +127,7 @@ def _freeze(items: Iterable[T], /) -> frozenset[T]:
 
 def union(sets: Iterable[Set[T]]) -> set[T]:
     """Return the union of all sets in the iterable."""
-    iterator = iter(sets)
-    result: set[T] = set()
-    for next_set in iterator:
-        result.update(next_set)
-    return result
+    return set(itertools.chain.from_iterable(sets))
 
 
 def intersect(sets: Iterable[Set[T]]) -> set[T]:
