@@ -295,6 +295,24 @@ class TestIntersect:
 
         assert result == {2, 3}
 
+    def test_intersect_with_empty_set(self):
+        a = {1, 2, 3}
+        b = {}
+        c = {2, 3, 4}
+
+        result = pk.sets.intersect([a, b, c])
+
+        assert result == set()
+
+    def test_heterogeneous_iterable_inputs(self):
+        sets = [
+            {1, 2},
+            (i for i in (2, 3)),
+            {i for i in range(2, 5)},
+        ]
+        result = pk.sets.intersect(sets)
+        assert result == {2}
+
     def test_no_mutation(self):
         a = {1, 2, 3}
         b = {2, 3, 4}

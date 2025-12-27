@@ -130,17 +130,17 @@ def union(sets: Iterable[Set[T]]) -> set[T]:
     return set(itertools.chain.from_iterable(sets))
 
 
-def intersect(sets: Iterable[Set[T]]) -> set[T]:
+def intersect(sets: Iterable[set[T]]) -> set[T]:
     """Return the intersection of all sets in the iterable."""
     iterator = iter(sets)
     try:
-        first_set = next(iterator)
+        result = set(next(iterator))
     except StopIteration:
         return set()
 
-    result: set[T] = set(first_set)
-    for next_set in iterator:
-        result.intersection_update(next_set)
+    for other in iterator:
+        result.intersection_update(other)
         if not result:
-            return set()
+            break
+
     return result
