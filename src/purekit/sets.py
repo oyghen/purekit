@@ -9,7 +9,7 @@ __all__ = (
 )
 
 import itertools
-from collections.abc import Iterable, Set
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
@@ -125,7 +125,7 @@ def _freeze(items: Iterable[T], /) -> frozenset[T]:
     return items if isinstance(items, frozenset) else frozenset(items)
 
 
-def union(sets: Iterable[Set[T]]) -> set[T]:
+def union(sets: Iterable[set[T]]) -> set[T]:
     """Return the union of all sets in the iterable."""
     return set(itertools.chain.from_iterable(sets))
 
