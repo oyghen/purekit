@@ -4,6 +4,7 @@ import itertools
 import math
 import re
 from collections.abc import Iterable, Iterator
+from numbers import Integral, Real
 
 import purekit as pk
 
@@ -59,12 +60,12 @@ def headline(title: str, width: int = 79, pad_char: str = "-", min_pad: int = 3)
     return inner_title.center(width, pad_char)
 
 
-def numstr(value: int | float, /) -> str:
+def numstr(value: Real, /) -> str:
     """Return the number string with underscores for thousands grouping."""
-    if not isinstance(value, (int, float)):
+    if not isinstance(value, Real):
         raise TypeError(f"unsupported type {type(value).__name__!r}")
 
-    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+    if not isinstance(value, Integral) and (math.isnan(value) or math.isinf(value)):
         return str(value)
 
     sign = "-" if value < 0 else ""
