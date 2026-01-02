@@ -56,11 +56,13 @@ class TestCharDiff:
 
 class TestConcat:
     def test_default(self):
+        assert pk.text.concat("a", "b", "c") == "a b c"
         assert pk.text.concat(["a", "b", "c"]) == "a b c"
 
     def test_basic_and_empty(self):
         assert pk.text.concat(["a", "b", "c"], sep=",") == "a,b,c"
         assert pk.text.concat([], sep=",") == ""
+        assert pk.text.concat(sep=",") == ""
 
     def test_iterables_and_none(self):
         assert pk.text.concat(["a", None, ["b", None, 3]], sep=",") == "a,b,3"
@@ -82,7 +84,7 @@ class TestConcat:
 
     def test_concat_strings_basic_list(self):
         strings = ["Hello", "World"]
-        result = pk.text.concat(strings, " ")
+        result = pk.text.concat(strings, sep=" ")
         assert result == "Hello World"
 
     def test_concat_strings_with_partial(self):
@@ -100,6 +102,36 @@ class TestConcat:
         concat = functools.partial(pk.text.concat, sep=" ")
         result = tuple(map(concat, [["Hello", "World"], ["Hi", "there"]]))
         assert result == ("Hello World", "Hi there")
+
+    def test_many_inputs(self):
+        result = pk.text.concat(
+            "The Zen of Python, by Tim Peters",
+            None,
+            "Beautiful is better than ugly.",
+            "Explicit is better than implicit.",
+            "Simple is better than complex.",
+            "Complex is better than complicated.",
+            "Flat is better than nested.",
+            "Sparse is better than dense.",
+            "Readability counts.",
+            "Special cases aren't special enough to break the rules.",
+            "Although practicality beats purity.",
+            "Errors should never pass silently.",
+            "Unless explicitly silenced.",
+            "In the face of ambiguity, refuse the temptation to guess.",
+            "There should be one-- and preferably only one --obvious way to do it.",
+            "Although that way may not be obvious at first unless you're Dutch.",
+            "Now is better than never.",
+            "Although never is often better than *right* now.",
+            "If the implementation is hard to explain, it's a bad idea.",
+            "If the implementation is easy to explain, it may be a good idea.",
+            "Namespaces are one honking great idea -- let's do more of those!",
+            sep="\n",
+        )
+        lines = result.splitlines()
+        assert isinstance(result, str)
+        assert len(lines) == 20
+        assert all(isinstance(line, str) for line in lines)
 
 
 class TestFindall:

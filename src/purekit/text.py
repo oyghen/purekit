@@ -20,7 +20,7 @@ def char_diff(string1: str, string2: str, /) -> str:
     return "\n".join((string1, markers, string2))
 
 
-def concat(strings: Iterable[str | None], sep: str = " ") -> str:
+def concat(*strings: str | Iterable[str | None] | None, sep: str = " ") -> str:
     """Return concatenated string excluding None values."""
     return sep.join(
         item if isinstance(item, str) else str(item)
