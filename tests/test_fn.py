@@ -1,4 +1,6 @@
 import copy
+import time
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import Mock
 
@@ -84,3 +86,129 @@ class TestPipe:
         assert result == 8
         f1.assert_called_once_with(3)
         f2.assert_called_once_with(4)
+
+
+class TestRetry:
+    def test_retry_call_success_first_try(self):
+        def func():
+            return 42
+
+        assert pk.fn.retry_call(func) == 42
+
+    @pytest.mark.parametrize(
+        "attempts, fail_times",
+        [
+            (3, 2),
+            (5, 4),
+            (1, 0),
+        ],
+    )
+    def test_retry_call_retries_and_succeeds(self, attempts: int, fail_times: int):
+        state = SimpleNamespace(count=0)
+
+        def func():
+            if state.count < fail_times:
+                state.count += 1
+                raise ValueError("fail")
+            return "success"
+
+        result = pk.fn.retry_call(
+            func,
+            attempts=attempts,
+            delay=0,
+            exceptions=(ValueError,),
+        )
+        assert result == "success"
+        assert state.count == fail_times
+
+    def test_retry_call_raises_after_max_attempts(self):
+        max_attempts = 3
+        state = SimpleNamespace(count=0)
+
+        def func():
+            state.count += 1
+            raise RuntimeError("fail")
+
+        with pytest.raises(RuntimeError):
+            pk.fn.retry_call(func, max_attempts, delay=0, exceptions=(RuntimeError,))
+
+        assert state.count == 3
+
+    @pytest.mark.parametrize(
+        "attempts, fail_times",
+        [
+            (3, 2),
+            (5, 4),
+            (1, 0),
+        ],
+    )
+    def test_retry_decorator_retries_and_succeeds(self, attempts: int, fail_times: int):
+        state = SimpleNamespace(count=0)
+
+        @pk.fn.retry(attempts, delay=0, exceptions=(KeyError,))
+        def func():
+            if state.count < fail_times:
+                state.count += 1
+                raise KeyError("fail")
+            return "success"
+
+        result = func()
+        assert result == "success"
+        assert state.count == fail_times
+
+    def test_retry_decorator_raises_after_max_attempts(self):
+        max_attempts = 3
+        state = SimpleNamespace(count=0)
+
+        @pk.fn.retry(max_attempts, delay=0, exceptions=(RuntimeError,))
+        def func():
+            state.count += 1
+            raise RuntimeError("fail")
+
+        with pytest.raises(RuntimeError):
+            func()
+
+        assert state.count == 3
+
+    @pytest.mark.parametrize(
+        "kind, attempts, delay, expected_sleeps",
+        [
+            ("fixed", 3, 1, [1, 1]),
+            ("exponential", 4, 0.5, [0.5, 1.0, 2.0]),
+            ("fixed", 7, 1, [1, 1, 1, 1, 1, 1]),
+            ("exponential", 7, 1, [1, 2, 4, 8, 16, 32]),
+        ],
+    )
+    def test_retry_call_sleep_durations(
+        self,
+        monkeypatch,
+        kind: str,
+        attempts: int,
+        delay: int | float,
+        expected_sleeps: list[int | float],
+    ):
+        state = SimpleNamespace(count=0)
+        sleeps = []
+
+        def fake_sleep(duration):
+            sleeps.append(duration)
+
+        monkeypatch.setattr(time, "sleep", fake_sleep)
+
+        def func():
+            if state.count < attempts - 1:
+                state.count += 1
+                raise ValueError("fail")
+            return "success"
+
+        result = pk.fn.retry_call(
+            func,
+            attempts=attempts,
+            delay=delay,
+            kind=kind,
+            exceptions=(ValueError,),
+        )
+
+        assert result == "success"
+        assert state.count == attempts - 1
+        assert sleeps == expected_sleeps
