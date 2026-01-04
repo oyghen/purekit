@@ -10,10 +10,15 @@ __all__ = (
     "text",
 )
 
+import logging
 from importlib import metadata
 from typing import TYPE_CHECKING
 
 __version__ = metadata.version(__name__)
+
+# Prevent "No handlers could be found" warnings when the library is imported.
+# Applications are responsible for configuring handlers/formatters/levels.
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
 if TYPE_CHECKING:

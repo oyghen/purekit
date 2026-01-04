@@ -1,4 +1,4 @@
-__all__ = ("PurekitError", "InvalidChoiceError")
+__all__ = ("PurekitError", "InvalidChoiceError", "RetryError")
 
 from collections.abc import Sequence
 from typing import TypeVar
@@ -42,3 +42,9 @@ class InvalidChoiceError(PurekitError, ValueError):
         return (
             f"{self.__class__.__name__}(value={self.value!r}, choices={self.choices!r})"
         )
+
+
+class RetryError(PurekitError, RuntimeError):
+    """Raised when all retry attempts for an operation are exhausted."""
+
+    pass

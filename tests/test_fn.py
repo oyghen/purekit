@@ -1,4 +1,5 @@
 import copy
+import logging
 import time
 from types import SimpleNamespace
 from typing import Any
@@ -212,3 +213,76 @@ class TestRetry:
         assert result == "success"
         assert state.count == attempts - 1
         assert sleeps == expected_sleeps
+
+
+class TestRetryLogging:
+    def test_info_log_on_first_call(self, caplog):
+        caplog.set_level(logging.INFO)
+
+        def add_one(x: int):
+            return x + 1
+
+        result = pk.fn.retry_call(add_one, attempts=3, delay=0, x=1)
+        assert result == 2
+
+        assert len(caplog.records) == 1
+        rec = caplog.records[0]
+        msg = rec.getMessage()
+        assert rec.levelno == logging.INFO
+        assert msg.startswith(f"calling {add_one.__name__} (attempt 1/3)")
+
+    @pytest.mark.parametrize(
+        "attempts, fail_times",
+        [
+            (3, 2),
+            (5, 4),
+            (1, 0),
+        ],
+    )
+    def test_warning_logged_on_retry(self, caplog, attempts: int, fail_times: int):
+        caplog.set_level(logging.WARNING)
+        state = SimpleNamespace(count=0)
+
+        def func():
+            if state.count < fail_times:
+                state.count += 1
+                raise RuntimeError("fail")
+            return "success"
+
+        result = pk.fn.retry_call(func, attempts, delay=0)
+        assert result == "success"
+        assert state.count == fail_times
+
+        assert len(caplog.records) == fail_times
+        for i in range(fail_times):
+            rec = caplog.records[i]
+            msg = rec.getMessage()
+            assert rec.levelno == logging.WARNING
+            assert msg.startswith(
+                f"attempt {i + 1}/{attempts} for {func.__name__} failed"
+            )
+            assert "retrying in" in msg
+            assert msg.endswith("seconds")
+
+    @pytest.mark.parametrize("attempts", [1, 3, 5])
+    def test_exception_logged_on_final_attempt(self, caplog, attempts: int):
+        caplog.set_level(logging.ERROR)
+        state = SimpleNamespace(count=0)
+
+        def always_fail():
+            state.count += 1
+            raise RuntimeError("fail")
+
+        with pytest.raises(pk.exceptions.RetryError):
+            pk.fn.retry_call(always_fail, attempts, delay=0)
+
+        assert state.count == attempts
+
+        assert len(caplog.records) == 1
+        rec = caplog.records[0]
+        msg = rec.getMessage()
+        assert rec.levelno == logging.ERROR
+        assert msg.startswith(
+            f"final attempt {attempts}/{attempts} for {always_fail.__name__} failed"
+        )
+        assert msg.endswith("raising exception")
