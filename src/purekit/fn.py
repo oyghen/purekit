@@ -1,4 +1,4 @@
-__all__ = ("identity", "pipe", "retry_call", "retry")
+__all__ = ("pipe", "retry_call", "retry")
 
 import functools
 import logging

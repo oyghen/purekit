@@ -1,4 +1,3 @@
-import copy
 import logging
 import time
 from types import SimpleNamespace
