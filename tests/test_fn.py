@@ -10,28 +10,6 @@ import pytest
 import purekit as pk
 
 
-@pytest.mark.parametrize(
-    "value, is_mutable",
-    [
-        (None, False),
-        (5, False),
-        ("abc", False),
-        ([1, 2, 3], True),
-        ((1, 2), False),
-        ({"a": 1}, True),
-    ],
-)
-def test_identity(value: Any, is_mutable: bool):
-    expected = copy.deepcopy(value)
-
-    result = pk.fn.identity(value)
-
-    assert result is value
-    assert result == expected
-    if is_mutable:
-        assert result is not expected
-
-
 class TestPipe:
     def test_pipe_single_function(self):
         assert pk.fn.pipe(2, [lambda x: x + 1]) == 3

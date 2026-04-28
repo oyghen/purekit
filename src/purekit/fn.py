@@ -13,11 +13,6 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-def identity(value: T, /) -> T:
-    """Return value unchanged."""
-    return value
-
-
 def pipe(value: T, functions: Iterable[Callable[[Any], Any]]) -> Any:
     """Return the result of applying a sequence of functions to the initial value."""
     result: Any = value
