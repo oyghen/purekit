@@ -1,4 +1,4 @@
-__all__ = ("EnumMixin",)
+__all__ = ["EnumMixin"]
 
 from enum import Enum
 from typing import Any, TypeVar
