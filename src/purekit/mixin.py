@@ -8,7 +8,13 @@ class EnumMixin:
     @classmethod
     def get_members(cls) -> tuple[Enum, ...]:
         """Return a tuple of all members."""
-        return tuple(cast(type[Enum], cls))
+        enum_cls = cast(type[Enum], cls)
+        return tuple(enum_cls)
+
+    @classmethod
+    def get_count(cls) -> int:
+        """Return the number of enum members."""
+        return len(cls.get_members())
 
     @classmethod
     def get_names(cls) -> tuple[str, ...]:
@@ -21,25 +27,35 @@ class EnumMixin:
         return tuple(member.value for member in cls.get_members())
 
     @classmethod
-    def get_member_by_name(cls, name: str) -> Enum:
+    def get_member_by_name(cls, name: str, preview: int = 3) -> Enum:
         """Return an enum member by its name."""
+        enum_cls = cast(type[Enum], cls)
         try:
-            return cast(type[Enum], cls)[name]
+            return enum_cls[name]
         except KeyError as exc:
-            available = ", ".join(cls.get_names())
+            available = cls._format_preview(cls.get_names(), preview)
             raise KeyError(
                 f"{cls.__qualname__} has no member named {name!r}. "
-                f"Available names: {available}"
+                f"Available names ({cls.get_count()}): {available}"
             ) from exc
 
     @classmethod
-    def get_member_by_value(cls, value: Any) -> Enum:
+    def get_member_by_value(cls, value: Any, preview: int = 3) -> Enum:
         """Return an enum member by its value."""
+        enum_cls = cast(type[Enum], cls)
         try:
-            return cast(type[Enum], cls)(value)
+            return enum_cls(value)
         except ValueError as exc:
-            available = ", ".join(repr(value) for value in cls.get_values())
+            available = cls._format_preview(cls.get_values(), preview)
             raise ValueError(
                 f"{cls.__qualname__} has no member with value {value!r}. "
-                f"Available values: {available}"
+                f"Available values ({cls.get_count()}): {available}"
             ) from exc
+
+    @staticmethod
+    def _format_preview(items: tuple[Any, ...], n: int) -> str:
+        """Return a formatted preview string of items, truncated after n items."""
+        preview = ", ".join(map(repr, items[:n]))
+        if len(items) > n:
+            preview += ", ..."
+        return preview
