@@ -4,7 +4,7 @@ import functools
 import logging
 import time
 from collections.abc import Callable, Iterable
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, get_args
 
 import purekit as pk
 
@@ -35,9 +35,9 @@ def retry_call(
         raise ValueError(f"invalid value {attempts!r}; expected >= 1")
     if delay < 0:
         raise ValueError(f"invalid value {delay!r}; expected >= 0")
-    choices = {"fixed", "exponential"}
+    choices = get_args(retry_call.__annotations__["kind"])
     if kind not in choices:
-        raise pk.exceptions.InvalidChoiceError(kind, choices)
+        raise ValueError(f"invalid kind {kind!r}: expected one of {choices}")
 
     func_name = getattr(func, "__name__", repr(func))
     for attempt in range(attempts):
