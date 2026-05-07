@@ -1,13 +1,13 @@
 import purekit
 
 
-def main():
+def main() -> None:
     result = purekit.__name__
     expected = "purekit"
     if result == expected:
-        print("smoke test passed")
+        print(f"Smoke test for {purekit.__name__}: PASSED")
     else:
-        raise RuntimeError("smoke test failed")
+        raise RuntimeError(f"Smoke test for {purekit.__name__}: FAILED")
 
 
 if __name__ == "__main__":
