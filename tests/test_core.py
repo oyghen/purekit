@@ -42,40 +42,40 @@ class TestFlatten:
         ],
     )
     def test_flatten(self, items: Any, expected: list[Any]):
-        assert list(pk.seq.flatten(items)) == expected
+        assert list(pk.core.flatten(items)) == expected
 
     def test_no_args(self):
-        assert list(pk.seq.flatten([])) == []
+        assert list(pk.core.flatten([])) == []
 
     def test_max_depth_behavior(self):
         nested = [[1, 2], [3, [4, 5]]]
-        assert list(pk.seq.flatten(nested, max_depth=0)) == [[1, 2], [3, [4, 5]]]
-        assert list(pk.seq.flatten(nested, max_depth=1)) == [1, 2, 3, [4, 5]]
-        assert list(pk.seq.flatten(nested, max_depth=None)) == [1, 2, 3, 4, 5]
+        assert list(pk.core.flatten(nested, max_depth=0)) == [[1, 2], [3, [4, 5]]]
+        assert list(pk.core.flatten(nested, max_depth=1)) == [1, 2, 3, [4, 5]]
+        assert list(pk.core.flatten(nested, max_depth=None)) == [1, 2, 3, 4, 5]
 
     def test_atomic_types_default_and_custom(self):
         # default atomic types treat strings/bytes as atomic
-        result = list(pk.seq.flatten(["one", ["two"], b"bytes"]))
+        result = list(pk.core.flatten(["one", ["two"], b"bytes"]))
         assert result == ["one", "two", b"bytes"]
         # custom atomic type: treat tuple as atomic
         items = [1, (2, 3), [4]]
-        assert list(pk.seq.flatten(items, atomic_types=tuple)) == [1, (2, 3), 4]
-        assert list(pk.seq.flatten(items, atomic_types=(tuple,))) == [1, (2, 3), 4]
+        assert list(pk.core.flatten(items, atomic_types=tuple)) == [1, (2, 3), 4]
+        assert list(pk.core.flatten(items, atomic_types=(tuple,))) == [1, (2, 3), 4]
 
     def test_iterator_consumption_and_exhaustion(self):
         gen = (x for x in [1, 2, 3])
-        assert list(pk.seq.flatten(gen)) == [1, 2, 3]
+        assert list(pk.core.flatten(gen)) == [1, 2, 3]
         # generator is now exhausted
-        assert list(pk.seq.flatten(gen)) == []
+        assert list(pk.core.flatten(gen)) == []
 
     def test_dict_iteration_behavior(self):
         d = {"a": 1, "b": 2}
-        assert list(pk.seq.flatten(d)) == ["a", "b"]
+        assert list(pk.core.flatten(d)) == ["a", "b"]
 
     def test_bytes_and_bytearray_are_atomic(self):
-        result = list(pk.seq.flatten([b"abc", bytearray(b"xyz")]))
+        result = list(pk.core.flatten([b"abc", bytearray(b"xyz")]))
         assert result == [b"abc", bytearray(b"xyz")]
 
     def test_negative_max_depth_raises(self):
         with pytest.raises(ValueError):
-            list(pk.seq.flatten([1, 2], max_depth=-1))
+            list(pk.core.flatten([1, 2], max_depth=-1))

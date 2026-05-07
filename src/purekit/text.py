@@ -24,7 +24,7 @@ def concat(*strings: str | Iterable[str | None] | None, sep: str = " ") -> str:
     """Return concatenated string excluding None values."""
     return sep.join(
         item if isinstance(item, str) else str(item)
-        for item in pk.seq.flatten(strings)
+        for item in pk.core.flatten(strings)
         if item is not None
     )
 
