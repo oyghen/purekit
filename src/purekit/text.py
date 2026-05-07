@@ -1,10 +1,8 @@
 __all__ = ("char_diff", "concat", "findall", "headline", "numstr", "remove_punctuation")
 
 import itertools
-import math
 import re
 from collections.abc import Iterable, Iterator
-from numbers import Integral, Real
 
 import purekit as pk
 
@@ -60,27 +58,20 @@ def headline(title: str, width: int = 79, pad_char: str = "-", min_pad: int = 3)
     return inner_title.center(width, pad_char)
 
 
-def numstr(value: Real, /) -> str:
+def numstr(value: int | float, /) -> str:
     """Return the number string with underscores for thousands grouping."""
-    if not isinstance(value, Real):
-        raise TypeError(f"unsupported type {type(value).__name__!r}")
-
-    if not isinstance(value, Integral) and (math.isnan(value) or math.isinf(value)):
-        return str(value)
-
     sign = "-" if value < 0 else ""
-    value = abs(value)
-
-    integer = int(value)
-    frac = value - integer
+    magnitude = float(abs(value))
+    integer = int(magnitude)
+    fraction = magnitude - integer
     integer_str = f"{integer:_}"
 
-    if frac == 0:
+    if fraction == 0:
         return f"{sign}{integer_str}"
 
     # limit fractional digits, avoid scientific notation, strip trailing zeros
-    frac_str = f"{frac:g}".rstrip("0").lstrip("0")
-    return f"{sign}{integer_str}{frac_str}"
+    fraction_str = f"{fraction:g}".rstrip("0").lstrip("0")
+    return f"{sign}{integer_str}{fraction_str}"
 
 
 def remove_punctuation(input_string: str, /) -> str:

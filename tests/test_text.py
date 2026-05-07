@@ -2,10 +2,17 @@ import functools
 import math
 import re
 from collections.abc import Iterator
+from contextlib import nullcontext
+from decimal import Decimal
+from typing import TypeAlias
 
 import pytest
 
 import purekit as pk
+
+ContextManager: TypeAlias = (
+    nullcontext[None] | pytest.RaisesExc[ValueError] | pytest.RaisesExc[TypeError]
+)
 
 
 class TestCharDiff:
@@ -254,40 +261,35 @@ class TestHeadline:
 
 class TestNumstr:
     @pytest.mark.parametrize(
-        "value, expected",
+        "value, expected, ctx",
         [
-            (0, "0"),
-            (-0.0, "0"),
-            (1, "1"),
-            (10, "10"),
-            (100, "100"),
-            (1000, "1_000"),
-            (1000000, "1_000_000"),
-            (100000.0, "100_000"),
-            (100000.01, "100_000.01"),
-            (1234567, "1_234_567"),
-            (-1234567, "-1_234_567"),
-            (1234.567, "1_234.567"),
-            (-1234.567, "-1_234.567"),
-            (0.000123, "0.000123"),
-            (1.5, "1.5"),
-            (0.1 + 0.2, "0.3"),
+            (0, "0", nullcontext()),
+            (-0.0, "0", nullcontext()),
+            (1, "1", nullcontext()),
+            (10, "10", nullcontext()),
+            (100, "100", nullcontext()),
+            (1000, "1_000", nullcontext()),
+            (1000000, "1_000_000", nullcontext()),
+            (100000.0, "100_000", nullcontext()),
+            (100000.01, "100_000.01", nullcontext()),
+            (1234567, "1_234_567", nullcontext()),
+            (-1234567, "-1_234_567", nullcontext()),
+            (1234.567, "1_234.567", nullcontext()),
+            (-1234.567, "-1_234.567", nullcontext()),
+            (0.000123, "0.000123", nullcontext()),
+            (1.5, "1.5", nullcontext()),
+            (0.1 + 0.2, "0.3", nullcontext()),
+            (Decimal.from_float(1000.00), "1_000", nullcontext()),
+            (Decimal.from_float(1000.10), "1_000.1", nullcontext()),
+            (math.nan, None, pytest.raises(ValueError)),
+            (math.inf, None, pytest.raises(OverflowError)),
+            (-math.inf, None, pytest.raises(OverflowError)),
+            ("str", None, pytest.raises(TypeError)),
         ],
     )
-    def test_basic_values(self, value, expected):
-        """Formatting for integers, negatives, zeros and ordinary floats."""
-        assert pk.text.numstr(value) == expected
-
-    def test_nan_and_infinities(self):
-        """NaN and infinities are returned via built-in str()."""
-        for v in (math.nan, math.inf, -math.inf):
-            assert pk.text.numstr(v) == str(v)
-
-    def test_type_error_for_non_number(self):
-        """Non-numeric types raise a clear TypeError."""
-        with pytest.raises(TypeError) as excinfo:
-            pk.text.numstr("123")
-        assert "unsupported type" in str(excinfo.value)
+    def test_basic_values(self, value, expected, ctx: ContextManager):
+        with ctx:
+            assert pk.text.numstr(value) == expected
 
 
 @pytest.mark.parametrize(
