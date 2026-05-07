@@ -1,6 +1,5 @@
-__all__ = ("PurekitError", "InvalidChoiceError", "RetryError")
+__all__ = ("PurekitError", "RetryError")
 
-from collections.abc import Sequence
 from typing import TypeVar
 
 T = TypeVar("T")
@@ -20,28 +19,6 @@ class PurekitError(Exception):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.message!r})"
-
-
-class InvalidChoiceError(PurekitError, ValueError):
-    """Raised when a value is not one of the allowed choices."""
-
-    __slots__ = ("value", "choices")
-
-    value: T
-    choices: Sequence[T] | None
-
-    def __init__(self, value: T, choices: Sequence[T] | None = None) -> None:
-        self.value = value
-        self.choices = choices
-        msg = f"invalid choice {self.value!r}"
-        if self.choices is not None:
-            msg += f"; expected a value from {self.choices!r}"
-        super().__init__(msg)
-
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}(value={self.value!r}, choices={self.choices!r})"
-        )
 
 
 class RetryError(PurekitError, RuntimeError):
