@@ -13,11 +13,9 @@ from enum import StrEnum, auto
 from pathlib import Path
 from typing import Annotated
 
-import typer
+import typer  # type: ignore
 
 import purekit as pk  # type: ignore
-
-LIB_NAME = "purekit"
 
 ROOT = Path(__file__).resolve().parent
 ROOT_PYPROJECT = ROOT / "pyproject.toml"
